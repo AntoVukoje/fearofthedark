@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 [ExecuteInEditMode]
 public class CopyComponents : MonoBehaviour
@@ -10,8 +10,8 @@ public class CopyComponents : MonoBehaviour
 		Up, Down, Right, Left, Forward, Back
 	}
 
+	#region Display
 	public Transform objectToCopyTransform;
-	public GameObject originalPrefab;
 	[Space]
 	public Transform useAsParent;
 	[Space]
@@ -20,28 +20,45 @@ public class CopyComponents : MonoBehaviour
 	[Space]
 	public int number;
 	[Space]
-	public MeshRenderer meshRenderer;
+	public MeshRenderer[] meshRenderers;
 	public bool removeChanges;
 	[Space]
-	[Space]
 	public bool apply;
+	#endregion
 
+	private Vector3 meshRendererSize;
 	private List<GameObject> resetList = new List<GameObject>();
+	private GameObject originalPrefab;
 
 	private void Update()
 	{
+		if (objectToCopyTransform == null) return;
+
+		Bounds objectBounds = new Bounds(objectToCopyTransform.position, Vector3.zero);
+
+		originalPrefab = PrefabUtility.GetCorrespondingObjectFromSource(objectToCopyTransform.gameObject);
+
+		meshRenderers = originalPrefab.GetComponentsInChildren<MeshRenderer>();
+
+		foreach (var mesh in meshRenderers)
+		{
+			objectBounds.Encapsulate(mesh.bounds);
+		}
+
+		meshRendererSize = objectBounds.size;
+
 		if (apply)
 		{
 			apply = false;
+
 			var position = objectToCopyTransform.position;
 			for (int i = 0; i < number + 1; i++)
 			{
-				Vector3 meshSize = meshRenderer.bounds.size;
 
 				resetList.Add(PrefabUtility.InstantiatePrefab(originalPrefab, useAsParent) as GameObject);
 				resetList[i].transform.position = position;
 
-				ChangeAxies(ref position, ref meshSize);
+				ChangeAxies(ref position, ref meshRendererSize);
 				position += offset;
 			}
 			DestroyImmediate(resetList[0]);
@@ -65,12 +82,11 @@ public class CopyComponents : MonoBehaviour
 	private void Draw()
 	{
 		Vector3 drawEnd = objectToCopyTransform.position;
-		Vector3 meshSize = meshRenderer.bounds.size;
 
 		for (int i = 0; i < number + 1; i++)
 		{
 			var lastPosition = drawEnd;
-			ChangeAxies(ref drawEnd, ref meshSize);
+			ChangeAxies(ref drawEnd, ref meshRendererSize);
 			Debug.DrawLine(lastPosition, drawEnd, Color.green);
 			drawEnd += offset;
 		}
