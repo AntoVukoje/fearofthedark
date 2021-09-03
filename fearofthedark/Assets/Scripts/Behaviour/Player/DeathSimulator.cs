@@ -9,9 +9,12 @@ public class DeathSimulator : MonoBehaviour
 	[Space]
 	[SerializeField] GameObject gameObjectOnOff;
 
+	public AudioSource whail;
+
 	private void Start()
 	{
 		healthBar.SetMaxHealth(health);
+		whail.Stop();
 	}
 
 	private void Update()
@@ -31,12 +34,17 @@ public class DeathSimulator : MonoBehaviour
 		{
 			health -= damagePerHit;
 			healthBar.SetHealth(health);
+			whail.Play(0);
 		}
         else if(health>0 && health<90)
         {
 			health += regen;
 			healthBar.SetHealth(health);
+			whail.Stop();
 		}
+
+		
+
 	}
 
 
